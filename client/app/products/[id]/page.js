@@ -1,31 +1,41 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useDispatch, useSelector } from 'react-redux';
 import api, { imageUrl } from '@/lib/api';
 import { money } from '@/lib/format';
+import { addToCart } from '@/store/cartSlice';
+import Stars from '@/components/Stars';
+import Reviews from '@/components/Reviews';
+import { inputCls, btnPrimary, btnGhost } from '@/components/ui';
 
 export default function ProductPage() {
   const { id } = useParams();
+  const dispatch = useDispatch();
+  const { user, ready } = useSelector((s) => s.auth);
+  const inCart = useSelector((s) => s.cart.items.find((i) => i.productId === id));
+
   const [product, setProduct] = useState(null);
   const [selected, setSelected] = useState(0);
+  const [qty, setQty] = useState(1);
+  const [added, setAdded] = useState(false);
   const [state, setState] = useState('loading'); // loading | ok | missing | error
 
-  useEffect(() => {
-    let cancelled = false;
-    api
-      .get(`/products/${id}`)
-      .then((r) => {
-        if (cancelled) return;
-        setProduct(r.data);
-        setState('ok');
-      })
-      .catch((e) => !cancelled && setState(e.response?.status === 404 ? 'missing' : 'error'));
-    return () => {
-      cancelled = true;
-    };
+  const fetchProduct = useCallback(async () => {
+    try {
+      const r = await api.get(`/products/${id}`);
+      setProduct(r.data);
+      setState('ok');
+    } catch (e) {
+      setState(e.response?.status === 404 ? 'missing' : 'error');
+    }
   }, [id]);
+
+  useEffect(() => {
+    fetchProduct();
+  }, [fetchProduct]);
 
   if (state === 'loading') return <p className="text-muted">Loading product...</p>;
   if (state !== 'ok') {
@@ -44,6 +54,15 @@ export default function ProductPage() {
   const images = product.images || [];
   const main = imageUrl(images[selected]);
   const soldOut = product.stock === 0;
+  const canBuy = ready && (!user || user.role === 'customer');
+  const alreadyInCart = inCart?.quantity || 0;
+  const room = product.stock - alreadyInCart; // how many more can be added
+
+  function handleAdd() {
+    dispatch(addToCart({ product, quantity: qty }));
+    setAdded(true);
+    setQty(1);
+  }
 
   return (
     <div>
@@ -89,6 +108,20 @@ export default function ProductPage() {
             Sold by {product.vendor?.storeName || 'a local seller'}
           </p>
 
+          <div className="mt-3 flex items-center gap-2 text-sm">
+            {product.numReviews ? (
+              <>
+                <Stars value={product.avgRating} />
+                <span className="text-muted">
+                  {product.avgRating} from {product.numReviews}{' '}
+                  {product.numReviews === 1 ? 'review' : 'reviews'}
+                </span>
+              </>
+            ) : (
+              <span className="text-muted">No reviews yet</span>
+            )}
+          </div>
+
           <p className="mt-4 font-display text-3xl font-semibold">{money(product.price)}</p>
 
           <p className="mt-2 text-sm">
@@ -101,17 +134,53 @@ export default function ProductPage() {
             )}
           </p>
 
-          <p className="mt-2 text-sm text-muted">
-            {product.numReviews
-              ? `★ ${product.avgRating} from ${product.numReviews} ${
-                  product.numReviews === 1 ? 'review' : 'reviews'
-                }`
-              : 'No reviews yet'}
-          </p>
+          {canBuy && !soldOut && (
+            <div className="mt-5">
+              {room > 0 ? (
+                <div className="flex items-end gap-3">
+                  <div>
+                    <label htmlFor="qty" className="mb-1 block text-sm font-medium">
+                      Quantity
+                    </label>
+                    <select
+                      id="qty"
+                      value={qty}
+                      onChange={(e) => setQty(Number(e.target.value))}
+                      className={`${inputCls} w-24`}
+                    >
+                      {Array.from({ length: Math.min(room, 10) }, (_, i) => i + 1).map((n) => (
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button onClick={handleAdd} className={btnPrimary}>
+                    Add to cart
+                  </button>
+                </div>
+              ) : (
+                <p className="text-sm text-muted">
+                  You have all {product.stock} available in your cart.
+                </p>
+              )}
+
+              {(added || alreadyInCart > 0) && (
+                <p role="status" className="mt-3 text-sm">
+                  {alreadyInCart} in your cart.{' '}
+                  <Link href="/cart" className="text-brand underline">
+                    View cart
+                  </Link>
+                </p>
+              )}
+            </div>
+          )}
 
           <p className="mt-6 max-w-prose whitespace-pre-line leading-relaxed">{product.description}</p>
         </div>
       </div>
+
+      <Reviews productId={id} onChange={fetchProduct} />
     </div>
   );
 }

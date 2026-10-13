@@ -10,6 +10,10 @@ export default function Navbar() {
   const dispatch = useDispatch();
   const router = useRouter();
   const { user, ready } = useSelector((s) => s.auth);
+  const cart = useSelector((s) => s.cart);
+
+  const count = cart.items.reduce((sum, i) => sum + i.quantity, 0);
+  const canShop = !user || user.role === 'customer'; // vendors and admins don't buy
 
   function handleLogout() {
     dispatch(logout());
@@ -34,6 +38,11 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
+          {ready && canShop && cart.ready && (
+            <Link href="/cart" className="mr-1 text-sm font-medium hover:text-brand">
+              Cart{count > 0 ? ` (${count})` : ''}
+            </Link>
+          )}
           {ready && user && (
             <>
               <span className="hidden text-sm text-muted sm:inline">

@@ -4,10 +4,12 @@ import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 import store from '@/store/store';
 import { hydrate, refreshUser } from '@/store/authSlice';
+import { hydrateCart } from '@/store/cartSlice';
 
 export default function Providers({ children }) {
   useEffect(() => {
     store.dispatch(hydrate());
+    store.dispatch(hydrateCart());
     // Re-check the saved login with the server (picks up vendor approval, expired tokens)
     if (store.getState().auth.token) store.dispatch(refreshUser());
   }, []);
