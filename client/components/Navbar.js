@@ -32,11 +32,24 @@ export default function Navbar() {
           </Link>
           {user?.role === 'vendor' && (
             <>
+              <Link href="/vendor/dashboard" className="text-sm text-muted hover:text-ink">
+                Dashboard
+              </Link>
               <Link href="/vendor/products" className="text-sm text-muted hover:text-ink">
                 My products
               </Link>
               <Link href="/vendor/orders" className="text-sm text-muted hover:text-ink">
                 Orders
+              </Link>
+            </>
+          )}
+          {user?.role === 'admin' && (
+            <>
+              <Link href="/admin" className="text-sm text-muted hover:text-ink">
+                Dashboard
+              </Link>
+              <Link href="/admin/vendors" className="text-sm text-muted hover:text-ink">
+                Vendors
               </Link>
             </>
           )}

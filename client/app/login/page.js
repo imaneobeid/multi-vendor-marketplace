@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { login, clearError } from '@/store/authSlice';
 import { inputCls, labelCls, btnPrimary } from '@/components/ui';
+import { homeFor } from '@/lib/routes';
 
 export default function LoginPage() {
   const dispatch = useDispatch();
@@ -19,7 +20,7 @@ export default function LoginPage() {
     dispatch(clearError());
     const result = await dispatch(login({ email, password }));
     if (login.fulfilled.match(result)) {
-      router.push(result.payload.user.role === 'vendor' ? '/vendor/products' : '/');
+      router.push(homeFor(result.payload.user.role));
     }
   }
 

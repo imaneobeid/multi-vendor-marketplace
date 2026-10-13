@@ -141,7 +141,9 @@ export default function VendorProductsPage() {
 
       {!approved && (
         <p className="mt-6 rounded-md border border-sun bg-sun/15 p-4 text-sm">
-          Your store is waiting for admin approval. You can add products as soon as it is approved.
+          {user.vendorStatus === 'rejected'
+            ? 'Your store application was not approved, so you cannot add products right now.'
+            : 'Your store is waiting for admin approval. You can add products as soon as it is approved.'}
         </p>
       )}
 

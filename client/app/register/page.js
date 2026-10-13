@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { register, clearError } from '@/store/authSlice';
 import { inputCls, labelCls, btnPrimary } from '@/components/ui';
+import { homeFor } from '@/lib/routes';
 
 export default function RegisterPage() {
   const dispatch = useDispatch();
@@ -32,7 +33,7 @@ export default function RegisterPage() {
     }
     const result = await dispatch(register(payload));
     if (register.fulfilled.match(result)) {
-      router.push(result.payload.user.role === 'vendor' ? '/vendor/products' : '/');
+      router.push(homeFor(result.payload.user.role));
     }
   }
 

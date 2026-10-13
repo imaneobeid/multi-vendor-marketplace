@@ -19,6 +19,8 @@ app.use('/api/categories', require('./routes/categories')); // Day 3
 app.use('/api/images', require('./routes/images'));         // Day 3
 app.use('/api/reviews', require('./routes/reviews'));       // Day 5
 app.use('/api/orders', require('./routes/orders'));         // Day 6
+app.use('/api/vendor', require('./routes/vendor'));         // Day 8
+app.use('/api/admin', require('./routes/admin'));           // Day 8
 
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 app.use((err, req, res, next) => {
