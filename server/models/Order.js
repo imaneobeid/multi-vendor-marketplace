@@ -29,7 +29,10 @@ const orderSchema = new mongoose.Schema(
     },
     totalPrice: { type: Number, required: true },
     paymentStatus: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending' },
-    stripeSessionId: String,
+    // Filled in when the (simulated) payment succeeds. We never store the full card number.
+    transactionId: String,
+    cardLast4: String,
+    paidAt: Date,
   },
   { timestamps: true }
 );

@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { imageUrl } from '@/lib/api';
 import { money } from '@/lib/format';
 import { setQuantity, removeFromCart } from '@/store/cartSlice';
-import { btnGhost } from '@/components/ui';
+import { btnGhost, btnPrimary } from '@/components/ui';
 
 export default function CartPage() {
   const dispatch = useDispatch();
@@ -123,7 +123,16 @@ export default function CartPage() {
               <dd className="font-display">{money(subtotal)}</dd>
             </div>
           </dl>
-          <Link href="/" className={`${btnGhost} mt-5 w-full`}>
+          {user ? (
+            <Link href="/checkout" className={`${btnPrimary} mt-5 w-full`}>
+              Checkout
+            </Link>
+          ) : (
+            <Link href="/login" className={`${btnPrimary} mt-5 w-full`}>
+              Log in to check out
+            </Link>
+          )}
+          <Link href="/" className={`${btnGhost} mt-2 w-full`}>
             Continue shopping
           </Link>
         </aside>

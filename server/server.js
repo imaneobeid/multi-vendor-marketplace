@@ -9,8 +9,6 @@ connectDB();
 
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(morgan('dev'));
-// NOTE (Day 6): the Stripe webhook route needs express.raw() and must be
-// registered BEFORE this json parser.
 app.use(express.json());
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
@@ -20,7 +18,7 @@ app.use('/api/products', require('./routes/products'));     // Day 3 (+ reviews 
 app.use('/api/categories', require('./routes/categories')); // Day 3
 app.use('/api/images', require('./routes/images'));         // Day 3
 app.use('/api/reviews', require('./routes/reviews'));       // Day 5
-// app.use('/api/orders', require('./routes/orders'));      // Day 6
+app.use('/api/orders', require('./routes/orders'));         // Day 6
 
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 app.use((err, req, res, next) => {

@@ -31,8 +31,18 @@ export default function Navbar() {
             Shop
           </Link>
           {user?.role === 'vendor' && (
-            <Link href="/vendor/products" className="text-sm text-muted hover:text-ink">
-              My products
+            <>
+              <Link href="/vendor/products" className="text-sm text-muted hover:text-ink">
+                My products
+              </Link>
+              <Link href="/vendor/orders" className="text-sm text-muted hover:text-ink">
+                Orders
+              </Link>
+            </>
+          )}
+          {user?.role === 'customer' && (
+            <Link href="/orders" className="text-sm text-muted hover:text-ink">
+              My orders
             </Link>
           )}
         </div>
