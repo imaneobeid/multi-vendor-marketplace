@@ -3,6 +3,7 @@ const Product = require('../models/Product');
 const Category = require('../models/Category');
 const Image = require('../models/Image');
 const asyncHandler = require('../utils/asyncHandler');
+const { approvedVendorIds, isApprovedVendor } = require('../utils/vendors');
 
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const imageIdFromUrl = (url) => url.split('/').pop();
@@ -51,7 +52,12 @@ exports.listProducts = asyncHandler(async (req, res) => {
     if (maxPrice && !isNaN(maxPrice)) filter.price.$lte = Number(maxPrice);
   }
 
-  if (vendor && isValidObjectId(vendor)) filter.vendor = vendor;
+  // Only products from approved vendors are shown in the shop
+  const approvedIds = await approvedVendorIds();
+  filter.vendor = { $in: approvedIds };
+  if (vendor && isValidObjectId(vendor)) {
+    filter.vendor = approvedIds.some((id) => id.equals(vendor)) ? vendor : { $in: [] };
+  }
 
   const sortMap = {
     newest: { createdAt: -1 },
@@ -75,7 +81,9 @@ exports.listProducts = asyncHandler(async (req, res) => {
 exports.getProduct = asyncHandler(async (req, res) => {
   if (!isValidObjectId(req.params.id)) return res.status(404).json({ message: 'Product not found' });
   const product = await populateProduct(Product.findById(req.params.id));
-  if (!product) return res.status(404).json({ message: 'Product not found' });
+  if (!product || !(await isApprovedVendor(product.vendor && product.vendor._id))) {
+    return res.status(404).json({ message: 'Product not found' });
+  }
   res.json(product);
 });
 

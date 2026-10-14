@@ -22,8 +22,8 @@ export default function Navbar() {
 
   return (
     <header className="border-b border-line bg-white">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-        <div className="flex items-center gap-6">
+      <nav className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
           <Link href="/" className="font-display text-2xl font-bold tracking-tight text-brand">
             Souk
           </Link>

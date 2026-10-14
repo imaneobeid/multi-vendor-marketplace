@@ -3,6 +3,7 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const gateway = require('../services/paymentGateway');
 const asyncHandler = require('../utils/asyncHandler');
+const { approvedVendorIds } = require('../utils/vendors');
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
@@ -51,7 +52,8 @@ exports.createOrder = asyncHandler(async (req, res) => {
   }
 
   const products = await Product.find({ _id: { $in: [...wanted.keys()] } });
-  if (products.length !== wanted.size) {
+  const approved = new Set((await approvedVendorIds()).map(String));
+  if (products.length !== wanted.size || products.some((p) => !approved.has(String(p.vendor)))) {
     return res.status(400).json({
       message: 'Some products in your cart are no longer available. Remove them and try again.',
     });
@@ -97,6 +99,12 @@ exports.payOrder = asyncHandler(async (req, res) => {
   const card = req.body.card || {};
   const check = gateway.validateCard(card);
   if (check.error) return res.status(400).json({ message: check.error });
+
+  // Items from a vendor who is no longer approved cannot be bought
+  const approvedNow = new Set((await approvedVendorIds()).map(String));
+  if (order.items.some((it) => !approvedNow.has(String(it.vendor)))) {
+    return res.status(409).json({ message: 'Some items in this order are no longer available.' });
+  }
 
   // 1) Reserve the stock. Each update only succeeds if enough stock is left,
   //    so two customers can never buy the last item at the same time.
