@@ -10,13 +10,17 @@ const Review = require('../models/Review');
 const Order = require('../models/Order');
 const fs = require('fs');
 const path = require('path');
+const { processImage } = require('../utils/imageProcessing');
+
+// By default products without a photo have none. Add --placeholders for colored pictures.
+const WITH_PLACEHOLDERS = process.argv.includes('--placeholders');
 
 const IMAGE_DIR = path.join(__dirname, '..', 'seed-images');
 const MIME = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
 const slugify = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
 // Looks for seed-images/<slug>.jpg (and <slug>-2.jpg ... <slug>-4.jpg for extra photos)
-function realPhotos(name) {
+async function realPhotos(name) {
   const found = [];
   const slug = slugify(name);
   for (let n = 1; n <= 4; n++) {
@@ -24,9 +28,7 @@ function realPhotos(name) {
     for (const ext of Object.keys(MIME)) {
       const file = path.join(IMAGE_DIR, base + ext);
       if (fs.existsSync(file)) {
-        const data = fs.readFileSync(file);
-        if (data.length > 1.5 * 1024 * 1024) console.warn(`  Note: ${base + ext} is large (${Math.round(data.length / 1024)} KB). Smaller files load faster.`);
-        found.push({ data, contentType: MIME[ext] });
+        found.push(await processImage(fs.readFileSync(file), MIME[ext])); // resized automatically
         break;
       }
     }
@@ -122,11 +124,11 @@ const daysAgo = (n) => new Date(Date.now() - n * 86400000);
   const usedPlaceholder = [];
   let realCount = 0;
   for (const item of catalog) {
-    let photos = realPhotos(item.name);
+    let photos = await realPhotos(item.name);
     if (photos.length) realCount++;
     else {
       usedPlaceholder.push(slugify(item.name));
-      photos = [{ data: placeholderSvg(item.name, item.hue), contentType: 'image/svg+xml' }];
+      photos = WITH_PLACEHOLDERS ? [{ data: placeholderSvg(item.name, item.hue), contentType: 'image/svg+xml' }] : [];
     }
     const urls = [];
     for (const ph of photos) {
@@ -195,8 +197,8 @@ const daysAgo = (n) => new Date(Date.now() - n * 86400000);
   await makeOrder({ who: buyer, days: 0, paid: false, lines: [['Cedar Candle', 1]] }); // never paid
 
   console.log(`Seeded: 8 users, 4 categories, ${catalog.length} products, ${reviews.length} reviews, 5 orders.`);
-  console.log(`Photos: ${realCount} products use your pictures from seed-images/, ${usedPlaceholder.length} use a placeholder.`);
-  if (usedPlaceholder.length) console.log('  Missing photos for: ' + usedPlaceholder.join(', ') + '\n  (see seed-images/README.txt)');
+  console.log(`Photos: ${realCount} products use your pictures from seed-images/, ${usedPlaceholder.length} have no photo yet.`);
+  if (usedPlaceholder.length) console.log('  No photo for: ' + usedPlaceholder.join(', ') + '\n  (add files named like these to seed-images/, or add photos from "My products")');
   console.log('');
   console.log('Demo logins:');
   console.log('  admin     admin@market.test       admin123');

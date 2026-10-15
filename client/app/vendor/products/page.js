@@ -10,7 +10,7 @@ import { inputCls, labelCls, btnPrimary, btnGhost } from '@/components/ui';
 
 const emptyForm = { name: '', description: '', price: '', stock: '', category: '' };
 const MAX_FILES = 4;
-const MAX_SIZE = 2 * 1024 * 1024;
+const MAX_SIZE = 10 * 1024 * 1024; // photos are resized by the server afterwards
 
 export default function VendorProductsPage() {
   const router = useRouter();
@@ -22,6 +22,8 @@ export default function VendorProductsPage() {
   const [files, setFiles] = useState([]);
   const [fileKey, setFileKey] = useState(0); // changing this clears the file picker
   const [editingId, setEditingId] = useState(null);
+  const [existing, setExisting] = useState([]); // photos the product already has (when editing)
+  const [removed, setRemoved] = useState([]); // photos marked for removal
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null); // { type: 'ok' | 'error', text }
 
@@ -54,6 +56,8 @@ export default function VendorProductsPage() {
     setFiles([]);
     setFileKey((k) => k + 1);
     setEditingId(null);
+    setExisting([]);
+    setRemoved([]);
   }
 
   function onPickFiles(e) {
@@ -64,7 +68,7 @@ export default function VendorProductsPage() {
       return setFiles([]);
     }
     if (picked.some((f) => f.size > MAX_SIZE)) {
-      setMessage({ type: 'error', text: 'Each photo must be 2 MB or smaller.' });
+      setMessage({ type: 'error', text: 'Each photo must be 10 MB or smaller.' });
       setFileKey((k) => k + 1);
       return setFiles([]);
     }
@@ -76,9 +80,16 @@ export default function VendorProductsPage() {
     e.preventDefault();
     setMessage(null);
 
+    const remaining = existing.length - removed.length;
+    if (remaining + files.length > MAX_FILES) {
+      setMessage({ type: 'error', text: `A product can have at most ${MAX_FILES} photos. Remove one first.` });
+      return;
+    }
+
     const data = new FormData();
     Object.entries(form).forEach(([key, value]) => data.append(key, value));
     files.forEach((f) => data.append('images', f));
+    if (removed.length) data.append('removeImages', JSON.stringify(removed));
 
     setSaving(true);
     try {
@@ -105,6 +116,8 @@ export default function VendorProductsPage() {
     });
     setFiles([]);
     setFileKey((k) => k + 1);
+    setExisting(p.images || []);
+    setRemoved([]);
     setMessage(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -240,9 +253,44 @@ export default function VendorProductsPage() {
             </select>
           </div>
 
+          {editingId && existing.length > 0 && (
+            <div>
+              <span className={labelCls}>Current photos</span>
+              <ul className="flex flex-wrap gap-3">
+                {existing.map((img) => {
+                  const gone = removed.includes(img);
+                  return (
+                    <li key={img} className="w-24">
+                      <div
+                        className={`h-24 w-24 overflow-hidden rounded-lg border border-line bg-line/40 transition-opacity ${
+                          gone ? 'opacity-30' : ''
+                        }`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={imageUrl(img)} alt="" className="h-full w-full object-cover" />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setRemoved(gone ? removed.filter((r) => r !== img) : [...removed, img])}
+                        className={`mt-1 w-full text-xs underline ${gone ? 'text-brand' : 'text-danger'}`}
+                      >
+                        {gone ? 'Keep this photo' : 'Remove'}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              {removed.length > 0 && (
+                <p className="mt-2 text-xs text-muted">
+                  {removed.length} {removed.length === 1 ? 'photo' : 'photos'} will be removed when you save.
+                </p>
+              )}
+            </div>
+          )}
+
           <div>
             <label htmlFor="images" className={labelCls}>
-              {editingId ? 'Add more photos (optional)' : 'Photos (up to 4, 2 MB each)'}
+              {editingId ? 'Add new photos (optional)' : 'Photos (up to 4)'}
             </label>
             <input
               key={fileKey}
@@ -253,6 +301,9 @@ export default function VendorProductsPage() {
               onChange={onPickFiles}
               className="block w-full text-sm file:mr-3 file:rounded-md file:border file:border-line file:bg-white file:px-3 file:py-2 file:text-sm"
             />
+            <p className="mt-1 text-xs text-muted">
+              Photos from your gallery work fine. Large ones are resized automatically.
+            </p>
           </div>
 
           <div className="flex gap-2">

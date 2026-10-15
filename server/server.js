@@ -55,7 +55,7 @@ app.use('/api/admin', require('./routes/admin'));
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 app.use((err, req, res, next) => {
   if (err.name === 'MulterError') {
-    const msg = err.code === 'LIMIT_FILE_SIZE' ? 'Each image must be 2 MB or smaller' : err.message;
+    const msg = err.code === 'LIMIT_FILE_SIZE' ? 'Each photo must be 10 MB or smaller' : err.message;
     return res.status(400).json({ message: msg });
   }
   if (err.type === 'entity.too.large') return res.status(413).json({ message: 'Request is too large' });

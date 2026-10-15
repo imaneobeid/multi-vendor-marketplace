@@ -208,6 +208,11 @@ export default function Home() {
                 className="group rounded-xl border border-line bg-white p-4 text-left transition hover:border-brand/60 hover:shadow-md motion-safe:hover:-translate-y-0.5"
               >
                 <div className="flex -space-x-3">
+                  {s.images.length === 0 && (
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft font-display text-lg font-semibold text-brand">
+                      {s.name.charAt(0)}
+                    </span>
+                  )}
                   {s.images.map((img) => (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img

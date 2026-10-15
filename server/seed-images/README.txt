@@ -2,9 +2,9 @@ PRODUCT PHOTOS FOR THE DEMO DATA
 
 Put your own pictures in this folder, then run "npm run seed".
 Each product uses the picture whose file name matches the list below.
-Allowed types: .jpg  .jpeg  .png  .webp   (keep each file under about 500 KB)
+Allowed types: .jpg  .jpeg  .png  .webp   (any size is fine, photos are resized automatically)
 Extra photos for the same product: add -2, -3 or -4 (for example copper-coffee-pot-2.jpg).
-Products without a picture get a colored placeholder.
+Products without a picture simply show a plain letter tile until you add one.
 
 FILE NAMES (without the extension)  ->  PRODUCT
 
@@ -32,5 +32,5 @@ beeswax-lip-balm                  ->  Beeswax Lip Balm
 
 TIPS
 - Free photos you may use: Unsplash and Pexels (read the license on each photo), or take your own.
-- Resize photos to about 800 px wide first (squoosh.app does it in the browser). Big photos make the shop slow.
+- Phone photos are fine: they are resized and turned the right way up automatically.
 - Only use pictures you are allowed to use, and credit the photographer if the license asks for it.

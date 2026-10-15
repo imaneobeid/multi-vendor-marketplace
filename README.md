@@ -37,7 +37,7 @@ Built with **Next.js, Node.js + Express, MongoDB, Redux Toolkit** and JWT authen
 | Backend | Node.js, Express |
 | Database | MongoDB with Mongoose (MongoDB Atlas) |
 | Auth | JWT, bcrypt password hashing, role-based middleware |
-| Uploads | Multer (images are stored in MongoDB) |
+| Uploads | Multer and Sharp (photos are resized, then stored in MongoDB) |
 | Security | Helmet, rate limiting, CORS allow-list, input validation |
 
 ## Run it locally
@@ -84,7 +84,7 @@ The frontend talks to `http://localhost:5000` by default. To use another address
 | Customer | customer@market.test | customer123 |
 | Customer | buyer@market.test | buyer123 |
 
-`npm run seed` deletes everything in the database first, then recreates this demo data. To use your own product photos, put files in `server/seed-images/` (see the README.txt inside) before seeding.
+`npm run seed` deletes everything in the database first, then recreates this demo data. To use your own product photos, put files in `server/seed-images/` (see the README.txt inside) before seeding, or add photos later from **My products**. Products without a photo show a plain letter tile.
 
 ## Payments (test mode)
 
@@ -114,7 +114,7 @@ It runs about 45 checks across logins, the catalog, role permissions, buying, st
 - **No overselling.** Stock is reserved with an atomic update when payment starts, and given back if the payment is declined.
 - **One order, many vendors.** Each order item stores its vendor and its own status, so every seller ships and tracks only their items. A vendor's dashboard and order list are filtered by item.
 - **Roles are enforced on the server.** Customers, vendors and admins are separated by middleware, and vendors can sell only after admin approval. Nobody can register as an admin.
-- **Images live in MongoDB** (up to 2 MB each, 4 per product), so the app has no dependency on external file storage.
+- **Images live in MongoDB** (4 per product). Uploads up to 10 MB are resized to at most 1200 px and compressed, so phone photos stay small and the app has no dependency on external file storage.
 - **Security basics:** hashed passwords, JWT expiry, rate-limited login, security headers, request size limits and a CORS allow-list.
 
 ## API overview

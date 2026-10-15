@@ -23,7 +23,7 @@ export default function ProductCard({ product }) {
             className="h-full w-full object-cover transition duration-300 motion-safe:group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full items-center justify-center font-display text-6xl text-muted/50">
+          <div className="flex h-full items-center justify-center bg-brand-soft font-display text-6xl text-brand/40">
             {product.name.charAt(0)}
           </div>
         )}
