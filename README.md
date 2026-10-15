@@ -189,4 +189,4 @@ client/
 
 ## Author
 
-Built by **[your name]** as the Multi-Vendor E-Commerce Marketplace project.
+Built by **Iman Obeid** as the Multi-Vendor E-Commerce Marketplace project.
