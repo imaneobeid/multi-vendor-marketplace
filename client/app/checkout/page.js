@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux';
 import api, { errorMessage, imageUrl } from '@/lib/api';
 import { money } from '@/lib/format';
 import { inputCls, labelCls, btnPrimary, btnGhost } from '@/components/ui';
+import CheckoutSteps from '@/components/CheckoutSteps';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -66,10 +67,11 @@ export default function CheckoutPage() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-semibold tracking-tight">Checkout</h1>
+      <CheckoutSteps current={1} />
+      <h1 className="font-display text-3xl font-semibold tracking-tight">Shipping details</h1>
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_340px]">
-        <form onSubmit={onSubmit} className="max-w-xl space-y-4 rounded-lg border border-line bg-white p-5">
+        <form onSubmit={onSubmit} className="max-w-xl space-y-4 rounded-xl border border-line bg-white p-5">
           <h2 className="font-display text-xl font-semibold">Shipping address</h2>
 
           <div>
@@ -118,7 +120,7 @@ export default function CheckoutPage() {
           </button>
         </form>
 
-        <aside className="h-fit rounded-lg border border-line bg-white p-5">
+        <aside className="h-fit rounded-xl border border-line bg-white p-5">
           <h2 className="font-display text-xl font-semibold">Your order</h2>
           <ul className="mt-4 space-y-3">
             {cart.items.map((i) => (

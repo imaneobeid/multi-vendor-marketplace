@@ -93,7 +93,7 @@ export default function OrderDetailPage() {
       )}
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_300px]">
-        <ul className="divide-y divide-line rounded-lg border border-line bg-white">
+        <ul className="divide-y divide-line rounded-xl border border-line bg-white">
           {order.items.map((i) => (
             <li key={i._id} className="flex gap-4 p-4">
               <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-line/40">
@@ -120,7 +120,7 @@ export default function OrderDetailPage() {
           ))}
         </ul>
 
-        <aside className="h-fit space-y-5 rounded-lg border border-line bg-white p-5 text-sm">
+        <aside className="h-fit space-y-5 rounded-xl border border-line bg-white p-5 text-sm">
           <div>
             <h2 className="font-display text-lg font-semibold">Shipping to</h2>
             <p className="mt-1">{a.fullName}</p>

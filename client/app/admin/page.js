@@ -65,7 +65,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="stagger mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard label="Platform sales" value={money(stats.orders.revenue)} />
             <StatCard label="Paid orders" value={stats.orders.paid} />
             <StatCard label="Products" value={stats.products} />
@@ -80,7 +80,7 @@ export default function AdminDashboard() {
           <div className="mt-8 grid gap-8 lg:grid-cols-2">
             <section>
               <h2 className="font-display text-xl font-semibold">Last 7 days</h2>
-              <div className="mt-3 rounded-lg border border-line bg-white p-4">
+              <div className="mt-3 rounded-xl border border-line bg-white p-4">
                 <DailyBars data={stats.daily} />
               </div>
             </section>
@@ -91,7 +91,7 @@ export default function AdminDashboard() {
                 {stats.topVendors.length === 0 ? (
                   <p className="mt-3 text-muted">No sales yet.</p>
                 ) : (
-                  <div className="mt-3 overflow-x-auto rounded-lg border border-line bg-white">
+                  <div className="mt-3 overflow-x-auto rounded-xl border border-line bg-white">
                     <table className="w-full text-left text-sm">
                       <thead className="border-b border-line text-muted">
                         <tr>
@@ -119,7 +119,7 @@ export default function AdminDashboard() {
                 {stats.topProducts.length === 0 ? (
                   <p className="mt-3 text-muted">No sales yet.</p>
                 ) : (
-                  <div className="mt-3 overflow-x-auto rounded-lg border border-line bg-white">
+                  <div className="mt-3 overflow-x-auto rounded-xl border border-line bg-white">
                     <table className="w-full text-left text-sm">
                       <thead className="border-b border-line text-muted">
                         <tr>

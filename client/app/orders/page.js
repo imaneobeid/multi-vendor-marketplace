@@ -8,6 +8,7 @@ import api, { errorMessage } from '@/lib/api';
 import { money, orderRef, formatDate } from '@/lib/format';
 import StatusBadge from '@/components/StatusBadge';
 import { btnGhost, btnPrimary } from '@/components/ui';
+import EmptyState from '@/components/EmptyState';
 
 export default function OrdersPage() {
   const router = useRouter();
@@ -39,16 +40,19 @@ export default function OrdersPage() {
       <h1 className="font-display text-3xl font-semibold tracking-tight">My orders</h1>
 
       {orders.length === 0 ? (
-        <div className="mt-4">
-          <p className="text-muted">You have not ordered anything yet.</p>
-          <Link href="/" className={`${btnGhost} mt-4`}>
-            Browse products
-          </Link>
-        </div>
+        <EmptyState
+          title="No orders yet"
+          text="When you buy something, you can follow it here from packing to delivery."
+          action={
+            <Link href="/" className={btnPrimary}>
+              Browse products
+            </Link>
+          }
+        />
       ) : (
-        <ul className="mt-6 space-y-4">
+        <ul className="stagger mt-6 space-y-4">
           {orders.map((o) => (
-            <li key={o._id} className="rounded-lg border border-line bg-white p-4">
+            <li key={o._id} className="rounded-xl border border-line bg-white p-4 transition-shadow hover:shadow-md">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="font-medium">Order #{orderRef(o._id)}</p>

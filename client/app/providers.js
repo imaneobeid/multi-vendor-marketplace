@@ -5,9 +5,11 @@ import { Provider } from 'react-redux';
 import store from '@/store/store';
 import { hydrate, refreshUser } from '@/store/authSlice';
 import { hydrateCart } from '@/store/cartSlice';
+import { applyPalette, savedPalette } from '@/lib/palette';
 
 export default function Providers({ children }) {
   useEffect(() => {
+    applyPalette(savedPalette());
     store.dispatch(hydrate());
     store.dispatch(hydrateCart());
     // Re-check the saved login with the server (picks up vendor approval, expired tokens)

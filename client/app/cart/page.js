@@ -6,6 +6,8 @@ import { imageUrl } from '@/lib/api';
 import { money } from '@/lib/format';
 import { setQuantity, removeFromCart } from '@/store/cartSlice';
 import { btnGhost, btnPrimary } from '@/components/ui';
+import EmptyState from '@/components/EmptyState';
+import CheckoutSteps from '@/components/CheckoutSteps';
 
 export default function CartPage() {
   const dispatch = useDispatch();
@@ -29,10 +31,15 @@ export default function CartPage() {
     return (
       <div>
         <h1 className="font-display text-3xl font-semibold tracking-tight">Your cart</h1>
-        <p className="mt-4 text-muted">Your cart is empty.</p>
-        <Link href="/" className={`${btnGhost} mt-4`}>
-          Browse products
-        </Link>
+        <EmptyState
+          title="Your cart is empty"
+          text="Find something you like and it will wait for you here."
+          action={
+            <Link href="/" className={btnPrimary}>
+              Browse products
+            </Link>
+          }
+        />
       </div>
     );
   }
@@ -42,10 +49,11 @@ export default function CartPage() {
 
   return (
     <div>
+      <CheckoutSteps current={0} />
       <h1 className="font-display text-3xl font-semibold tracking-tight">Your cart</h1>
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_300px]">
-        <ul className="divide-y divide-line rounded-lg border border-line bg-white">
+        <ul className="stagger divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
           {items.map((item) => {
             const img = imageUrl(item.image);
             return (
@@ -111,7 +119,7 @@ export default function CartPage() {
           })}
         </ul>
 
-        <aside className="h-fit rounded-lg border border-line bg-white p-5">
+        <aside className="h-fit rounded-xl border border-line bg-white p-5 lg:sticky lg:top-28">
           <h2 className="font-display text-xl font-semibold">Summary</h2>
           <dl className="mt-4 space-y-2 text-sm">
             <div className="flex justify-between">

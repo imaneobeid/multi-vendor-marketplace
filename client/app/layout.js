@@ -1,6 +1,7 @@
 import './globals.css';
 import Providers from './providers';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 export const metadata = {
   title: 'Souk',
@@ -18,10 +19,11 @@ export default function RootLayout({ children }) {
           href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=DM+Sans:wght@400;500;700&display=swap"
         />
       </head>
-      <body>
+      <body className="flex min-h-screen flex-col">
         <Providers>
           <Navbar />
-          <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+          <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
+          <Footer />
         </Providers>
       </body>
     </html>

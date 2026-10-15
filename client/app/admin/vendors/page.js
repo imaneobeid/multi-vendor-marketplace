@@ -124,7 +124,7 @@ export default function AdminVendorsPage() {
           {vendors.map((v) => {
             const [label, cls] = BADGE[v.vendorStatus] || BADGE.pending;
             return (
-              <li key={v._id} className="rounded-lg border border-line bg-white p-4">
+              <li key={v._id} className="rounded-xl border border-line bg-white p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-medium">

@@ -78,7 +78,7 @@ export default function Reviews({ productId, onChange }) {
       <h2 className="font-display text-2xl font-semibold tracking-tight">Reviews</h2>
 
       {isCustomer && (
-        <form onSubmit={onSubmit} className="mt-4 max-w-xl space-y-3 rounded-lg border border-line bg-white p-4">
+        <form onSubmit={onSubmit} className="mt-4 max-w-xl space-y-3 rounded-xl border border-line bg-white p-4">
           <p className="font-medium">{mine ? 'Your review' : 'Write a review'}</p>
 
           <div>
@@ -91,7 +91,7 @@ export default function Reviews({ productId, onChange }) {
                   onClick={() => setRating(n)}
                   aria-label={`${n} ${n === 1 ? 'star' : 'stars'}`}
                   aria-pressed={rating === n}
-                  className={`text-3xl leading-none ${n <= rating ? 'text-sun' : 'text-line'}`}
+                  className={`text-3xl leading-none transition-transform motion-safe:hover:scale-125 motion-safe:active:scale-90 ${n <= rating ? 'text-star' : 'text-line'}`}
                 >
                   ★
                 </button>

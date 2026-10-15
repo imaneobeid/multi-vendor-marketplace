@@ -49,14 +49,14 @@ const ADDRESS = { fullName: 'Test Buyer', address: '1 Test Street', city: 'Beiru
 
   section('Catalog');
   const all = (await call('GET', '/products?limit=50')).data;
-  check('12 products in the shop', all.total === 12, `(got ${all.total})`);
-  check('search "vase" finds 1 product', (await call('GET', '/products?search=vase')).data.total === 1);
-  check('category "food" has 4 products', (await call('GET', '/products?category=food')).data.total === 4);
+  check('21 products in the shop', all.total === 21, `(got ${all.total})`);
+  check('search "copper" finds 1 product', (await call('GET', '/products?search=copper')).data.total === 1);
+  check('category "food" has 6 products', (await call('GET', '/products?category=food')).data.total === 6);
   const expensive = (await call('GET', '/products?sort=price_desc&limit=1')).data.products[0];
   check('sorting by price puts Linen Shirt first', expensive?.name === 'Linen Shirt');
   const cheap = (await call('GET', '/products?minPrice=10&maxPrice=20')).data.products;
   check('price filter 10 to 20 works', cheap.length > 0 && cheap.every((p) => p.price >= 10 && p.price <= 20));
-  const candle = await find('soy candle');
+  const candle = await find('cedar candle');
   const img = await fetch(`${BASE}${candle.images[0]}`);
   check('product image is served', img.status === 200 && (img.headers.get('content-type') || '').includes('image'));
 
@@ -106,14 +106,14 @@ const ADDRESS = { fullName: 'Test Buyer', address: '1 Test Street', city: 'Beiru
   check('vendor marks it shipped', (await call('PATCH', `/orders/${orderId}/items/${itemId}/status`, { token: vendor1, body: { status: 'shipped' } })).status === 200);
   check('vendor marks it delivered', (await call('PATCH', `/orders/${orderId}/items/${itemId}/status`, { token: vendor1, body: { status: 'delivered' } })).status === 200);
   const vs = (await call('GET', '/vendor/stats', { token: vendor1 })).data;
-  check('vendor dashboard has sales', vs?.totals?.revenue > 0 && vs.products.length === 4);
+  check('vendor dashboard has sales', vs?.totals?.revenue > 0 && vs.products.length === 5);
   const as = (await call('GET', '/admin/stats', { token: admin })).data;
   check('admin report has sales and 1 pending vendor', as?.orders?.paid >= 5 && as.vendors.pending === 1);
 
   section('Vendor approval hides and blocks products');
   const approved = (await call('GET', '/admin/vendors?status=approved', { token: admin })).data;
   const green = approved.find((v) => v.storeName === 'Green Table');
-  const olive = await find('olive oil');
+  const olive = await find('extra virgin');
   check('found the Green Table vendor', !!green && !!olive);
   check('admin can reject a vendor', (await call('PATCH', `/admin/vendors/${green._id}/status`, { token: admin, body: { status: 'rejected' } })).status === 200);
   check('their products disappear from the shop', (await call('GET', '/products?category=food')).data.total === 0);
@@ -121,7 +121,7 @@ const ADDRESS = { fullName: 'Test Buyer', address: '1 Test Street', city: 'Beiru
   r = await call('POST', '/orders', { token: customer, body: { items: [{ productId: olive._id, quantity: 1 }], shippingAddress: ADDRESS } });
   check('their products cannot be ordered (400)', r.status === 400);
   check('admin can approve them again', (await call('PATCH', `/admin/vendors/${green._id}/status`, { token: admin, body: { status: 'approved' } })).status === 200);
-  check('products are back in the shop', (await call('GET', '/products?category=food')).data.total === 4);
+  check('products are back in the shop', (await call('GET', '/products?category=food')).data.total === 6);
 
   console.log(`\n${passed} passed, ${failed} failed.`);
   if (failed) console.log('Copy the FAIL lines and send them to me.');

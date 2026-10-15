@@ -161,7 +161,7 @@ export default function VendorProductsPage() {
       )}
 
       {approved && (
-        <form onSubmit={onSubmit} className="mt-6 max-w-xl space-y-4 rounded-lg border border-line bg-white p-5">
+        <form onSubmit={onSubmit} className="mt-6 max-w-xl space-y-4 rounded-xl border border-line bg-white p-5">
           <h2 className="font-display text-xl font-semibold">
             {editingId ? 'Edit product' : 'Add a product'}
           </h2>
@@ -276,7 +276,7 @@ export default function VendorProductsPage() {
             : 'Nothing here yet.'}
         </p>
       ) : (
-        <ul className="mt-3 divide-y divide-line rounded-lg border border-line bg-white">
+        <ul className="mt-3 divide-y divide-line rounded-xl border border-line bg-white">
           {products.map((p) => (
             <li key={p._id} className="flex items-center gap-4 p-3">
               <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-line/40">

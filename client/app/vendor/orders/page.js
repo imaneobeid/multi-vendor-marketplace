@@ -76,7 +76,7 @@ export default function VendorOrdersPage() {
       ) : (
         <ul className="mt-6 space-y-4">
           {orders.map((o) => (
-            <li key={o._id} className="rounded-lg border border-line bg-white p-4">
+            <li key={o._id} className="rounded-xl border border-line bg-white p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="font-medium">

@@ -63,7 +63,7 @@ export default function VendorDashboard() {
 
       {stats && (
         <>
-          <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="stagger mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard label="Total sales" value={money(stats.totals.revenue)} />
             <StatCard label="Orders" value={stats.totals.orders} />
             <StatCard label="Items sold" value={stats.totals.unitsSold} />
@@ -89,7 +89,7 @@ export default function VendorDashboard() {
               {stats.products.length === 0 ? (
                 <p className="mt-3 text-muted">You have no products yet.</p>
               ) : (
-                <div className="mt-3 overflow-x-auto rounded-lg border border-line bg-white">
+                <div className="mt-3 overflow-x-auto rounded-xl border border-line bg-white">
                   <table className="w-full text-left text-sm">
                     <thead className="border-b border-line text-muted">
                       <tr>
@@ -140,7 +140,7 @@ export default function VendorDashboard() {
 
             <section>
               <h2 className="font-display text-xl font-semibold">Last 7 days</h2>
-              <div className="mt-3 rounded-lg border border-line bg-white p-4">
+              <div className="mt-3 rounded-xl border border-line bg-white p-4">
                 <DailyBars data={stats.daily} />
               </div>
             </section>

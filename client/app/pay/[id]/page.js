@@ -8,6 +8,7 @@ import api, { errorMessage } from '@/lib/api';
 import { money, orderRef } from '@/lib/format';
 import { clearCart } from '@/store/cartSlice';
 import { inputCls, labelCls, btnPrimary, btnGhost } from '@/components/ui';
+import CheckoutSteps from '@/components/CheckoutSteps';
 
 const groupCardNumber = (v) => v.replace(/\D/g, '').slice(0, 16).replace(/(\d{4})(?=\d)/g, '$1 ');
 const formatExpiry = (v) => {
@@ -75,7 +76,11 @@ export default function PayPage() {
   // Payment done (just now, or earlier)
   if (order.paymentStatus === 'paid') {
     return (
-      <div className="mx-auto max-w-md text-center">
+      <div className="anim-fade-up mx-auto max-w-md text-center">
+        <svg className="draw-check mx-auto mb-4" width="72" height="72" viewBox="0 0 72 72" fill="none" aria-hidden="true">
+          <circle cx="36" cy="36" r="33" stroke="var(--color-brand)" strokeWidth="3" />
+          <path d="M22 37l10 10 18-21" stroke="var(--color-brand)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
         <h1 className="font-display text-3xl font-semibold tracking-tight">Payment received</h1>
         <p className="mt-3 text-muted">
           Thank you. Order #{orderRef(order._id)} for {money(order.totalPrice)} is confirmed
@@ -95,6 +100,7 @@ export default function PayPage() {
 
   return (
     <div className="mx-auto max-w-md">
+      <CheckoutSteps current={2} />
       <h1 className="font-display text-3xl font-semibold tracking-tight">Payment</h1>
       <p className="mt-1 text-muted">
         Order #{orderRef(order._id)}, {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
@@ -106,7 +112,7 @@ export default function PayPage() {
         3-digit code work.
       </p>
 
-      <form onSubmit={onSubmit} className="mt-5 space-y-4 rounded-lg border border-line bg-white p-5">
+      <form onSubmit={onSubmit} className="mt-5 space-y-4 rounded-xl border border-line bg-white p-5">
         <div>
           <label htmlFor="cardName" className={labelCls}>
             Name on card
