@@ -118,7 +118,7 @@ By default the demo products have no photos and show a plain letter tile. To add
 
 ## Payments (test mode)
 
-Stripe is not available in the author's country, so payments go through a **simulated test-mode gateway** (`server/services/paymentGateway.js`). It follows the flow of a hosted checkout: the server creates the order, the customer pays on a separate payment page, and the order is confirmed only after a successful charge.
+Stripe is not available in my country, so payments go through a **simulated test-mode gateway** (`server/services/paymentGateway.js`). It follows the flow of a hosted checkout: the server creates the order, the customer pays on a separate payment page, and the order is confirmed only after a successful charge.
 
 | Card number | Result |
 |---|---|
