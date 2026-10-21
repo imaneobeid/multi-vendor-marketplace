@@ -11,6 +11,7 @@ const Order = require('../models/Order');
 const fs = require('fs');
 const path = require('path');
 const { processImage } = require('../utils/imageProcessing');
+const { saveImage } = require('../services/imageStorage');
 
 // By default products without a photo have none. Add --placeholders for colored pictures.
 const WITH_PLACEHOLDERS = process.argv.includes('--placeholders');
@@ -132,8 +133,7 @@ const daysAgo = (n) => new Date(Date.now() - n * 86400000);
     }
     const urls = [];
     for (const ph of photos) {
-      const img = await Image.create({ ...ph, size: ph.data.length, owner: vendors[item.v]._id });
-      urls.push(`/api/images/${img._id}`);
+      urls.push(await saveImage({ data: ph.data, contentType: ph.contentType, owner: vendors[item.v]._id }));
     }
     products[item.name] = await Product.create({
       vendor: vendors[item.v]._id,

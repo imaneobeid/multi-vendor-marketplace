@@ -4,6 +4,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const mongoose = require('mongoose');
+const sanitize = require('./middleware/sanitize');
 const connectDB = require('./config/db');
 
 // Stop early with a clear message if the setup is incomplete
@@ -30,19 +32,24 @@ app.use(cors({ origin: origins, credentials: true }));
 
 app.use(morgan('dev'));
 app.use(express.json({ limit: '100kb' }));
+app.use(sanitize); // blocks MongoDB operator injection
 
 const tooMany = { message: 'Too many requests. Please wait a few minutes and try again.' };
 const limiter = (limit) =>
   rateLimit({ windowMs: 15 * 60 * 1000, limit, standardHeaders: 'draft-7', legacyHeaders: false, message: tooMany });
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+// Light and fast on purpose: it is what wakes the server up and what the keep-alive pings call
+app.get('/api/health', (req, res) =>
+  res.json({ status: 'ok', db: mongoose.connection.readyState === 1 ? 'connected' : 'connecting' })
+);
 
 // Product images are many small requests per page, so they are not rate limited
 app.use('/api/images', require('./routes/images'));
 
-app.use('/api/auth/login', limiter(30));    // slows down password guessing
-app.use('/api/auth/register', limiter(30));
-app.use('/api', limiter(1500));
+// The limits can be raised with environment variables (used by the automated tests)
+app.use('/api/auth/login', limiter(Number(process.env.LOGIN_RATE_LIMIT) || 30));    // slows down password guessing
+app.use('/api/auth/register', limiter(Number(process.env.LOGIN_RATE_LIMIT) || 30));
+app.use('/api', limiter(Number(process.env.API_RATE_LIMIT) || 1500));
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/products', require('./routes/products'));

@@ -1,7 +1,9 @@
 const STYLES = {
   paid: ['Paid', 'bg-brand/10 text-brand'],
   pending: ['Awaiting payment', 'bg-sun/25 text-ink'],
+  processing: ['Processing payment', 'bg-sun/25 text-ink'],
   failed: ['Payment failed', 'bg-danger/10 text-danger'],
+  refunded: ['Refunded', 'bg-line/70 text-ink'],
   placed: ['Placed', 'bg-line/70 text-ink'],
   shipped: ['Shipped', 'bg-sun/25 text-ink'],
   delivered: ['Delivered', 'bg-brand/10 text-brand'],

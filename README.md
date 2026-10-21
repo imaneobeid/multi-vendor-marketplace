@@ -4,6 +4,9 @@ Souk is a marketplace where small local sellers list products and customers brow
 
 Built with **Next.js, Node.js + Express, MongoDB, Redux Toolkit** and JWT authentication.
 
+**Live demo:** https://multi-vendor-marketplace-one.vercel.app
+The backend runs on a free plan. A keep-alive job pings it every few minutes, and if it has still gone to sleep the site shows a "Waking up the server" notice and retries by itself. That first load can take up to a minute.
+
 ## Screenshots
 
 | Shop | Product page |
@@ -22,10 +25,10 @@ Built with **Next.js, Node.js + Express, MongoDB, Redux Toolkit** and JWT authen
 
 **Customers**
 - Register and log in, with a cart that is saved in the browser and survives a refresh
-- Browse the catalog with search, category filter, price range, sorting and pagination
-- Filter by seller with the "Meet the shops" section
+- Browse the catalog with search, category filter, price range, sorting and pagination, and filter by seller ("Meet the shops")
 - Read and write reviews with 1 to 5 star ratings (one review per product, editable and deletable)
-- Check out with a shipping address and a test-mode card payment
+- Check out with a shipping address and a test-mode card payment: successful, declined and cancelled payments are all handled, with a full payment history on every order
+- Cancel an order: before payment it is simply cancelled, and after payment (while nothing has shipped) it is refunded and the stock is restored
 - Track every order item: placed, shipped, delivered
 
 **Vendors**
@@ -51,8 +54,9 @@ Built with **Next.js, Node.js + Express, MongoDB, Redux Toolkit** and JWT authen
 | Backend | Node.js, Express |
 | Database | MongoDB with Mongoose (MongoDB Atlas) |
 | Auth | JWT, bcrypt password hashing, role-based middleware |
-| Uploads | Multer and Sharp (photos are resized, then stored in MongoDB) |
-| Security | Helmet, rate limiting, CORS allow-list, input validation |
+| Uploads | Multer and Sharp (photos are resized), stored in MongoDB or Cloudinary |
+| Security | Helmet, rate limiting, CORS allow-list, input validation, NoSQL-injection filter |
+| Hosting | Vercel (frontend), Render (backend), MongoDB Atlas (database) |
 
 ## Run it locally
 
@@ -105,9 +109,7 @@ These are created by `npm run seed`.
 | Customer | | customer@market.test | customer123 |
 | Customer | | buyer@market.test | buyer123 |
 
-The demo data holds 8 users, 4 categories, 21 products, 10 reviews and 5 orders in different states (delivered, shipped, placed and one unpaid).
-
-`npm run seed` **deletes everything** in the database first, then recreates this data.
+The demo data holds 8 users, 4 categories, 21 products, 10 reviews and 5 orders in different states. `npm run seed` **deletes everything** in the database first, then recreates this data.
 
 ### Product photos
 
@@ -118,14 +120,47 @@ By default the demo products have no photos and show a plain letter tile. To add
 
 ## Payments (test mode)
 
-Stripe is not available in my country, so payments go through a **simulated test-mode gateway** (`server/services/paymentGateway.js`). It follows the flow of a hosted checkout: the server creates the order, the customer pays on a separate payment page, and the order is confirmed only after a successful charge.
+Stripe is not available in my country, so payments go through a **simulated test-mode gateway** (`server/services/paymentGateway.js`). It behaves like a real gateway's test mode: card numbers are checked (length, Luhn checksum, expiry, CVC), a few special numbers produce specific failures, and every other valid number is approved. No real payment is made, and full card numbers are never stored (only the last 4 digits and the brand).
+
+The payment page has a **Test mode** panel with a "Fill" button for each case:
 
 | Card number | Result |
 |---|---|
-| `4242 4242 4242 4242` | Payment succeeds |
+| `4242 4242 4242 4242` (or any other valid number, e.g. `4111 1111 1111 1111`, `5555 5555 5555 4444`) | Payment succeeds |
 | `4000 0000 0000 0002` | Card declined |
+| `4000 0000 0000 9995` | Insufficient funds |
+| `4000 0000 0000 0069` | Expired card |
+| `4000 0000 0000 0127` | Wrong security code |
+| `4000 0000 0000 0119` | Processing error |
 
-Use any future expiry date and any 3-digit CVC. No real payment is ever made, and full card numbers are never stored (only the last 4 digits). The gateway lives in a single file, so a real provider such as Stripe could replace it without touching the rest of the code.
+Use any future expiry date and any 3-digit CVC.
+
+### Order and payment statuses
+
+| Status | Meaning | What the customer can do |
+|---|---|---|
+| `pending` | Order created, not paid | Pay, or cancel |
+| `processing` | A payment is running right now | Wait (a second payment is blocked) |
+| `paid` | Payment succeeded, stock reduced | Cancel and get a refund until the first item ships |
+| `failed` | The last payment was declined, nothing charged, stock untouched | Try another card, or cancel |
+| `cancelled` | Cancelled before payment (by the customer, by starting a newer order, or after 24 hours unpaid) | Nothing |
+| `refunded` | Paid, then cancelled before shipping: money returned, stock restored | Nothing |
+
+Each order also keeps a **payment history** of every attempt (time, card brand and last 4 digits, result and reason). Each item has its own shipping status: placed, shipped, delivered or cancelled.
+
+The gateway lives in a single file, so a real provider such as Stripe could replace it without touching the rest of the code.
+
+## Image storage
+
+Product photos are resized on upload (at most 1200 px, compressed, phone photos turned the right way up) and stored in **MongoDB** by default, so the app needs no extra account. Cloudinary is supported too: set `CLOUDINARY_URL` in the backend's environment and new photos are uploaded to Cloudinary instead, with the same code for the rest of the app (`server/services/imageStorage.js`). The Cloudinary path has not been tested against a real account, because Cloudinary sign-up is not available in my country.
+
+## Cold starts (free hosting)
+
+The free backend host puts the server to sleep after 15 minutes without visitors. To reduce the impact:
+- A scheduled GitHub Actions job (`.github/workflows/keep-alive.yml`) visits `/api/health` every 5 minutes, so the server rarely sleeps.
+- If it is asleep anyway, the site shows a "Waking up the server" notice and retries its loading requests automatically for about a minute. Payments and other changes are never retried automatically.
+- The site starts waking the server as soon as any page opens.
+- The server starts fast: it begins listening immediately, the image library is loaded only when a photo is uploaded, and the list of approved vendors is cached for 30 seconds.
 
 ## Automated check
 
@@ -133,19 +168,21 @@ With the backend running and freshly seeded:
 
 ```bash
 cd server
+npm run seed
 npm run smoke
+npm run seed
 ```
 
-It runs about 40 checks covering logins, the catalog, role permissions, buying, stock, reviews, order fulfilment, dashboards and vendor approval, and prints PASS or FAIL for each. Run `npm run seed` afterwards to reset the demo data.
+It runs about 100 checks and prints PASS or FAIL for each: logins and tokens, input safety, the catalog, role permissions, every payment outcome (success, each kind of decline, invalid details), double clicks, cancellation and refunds, unpaid-order expiry, stock and the last-item race between two customers, reviews, fulfilment and privacy, dashboards and vendor approval. The final `npm run seed` resets the demo data.
 
 ## How it works
 
 - **Prices are never trusted from the browser.** At checkout the server rebuilds the order from the database, so a changed price in the browser has no effect.
-- **No overselling.** Stock is reserved with an atomic update when payment starts, and given back if the payment is declined.
-- **One order, many vendors.** Each order item stores its vendor and its own status, so every seller ships and tracks only their own items. A vendor's dashboard and order list are filtered by item.
+- **Payments are safe against double clicks.** Starting a payment takes a lock on the order, so a second click or a second tab can never charge twice.
+- **No overselling.** Stock is reserved with an atomic update when payment starts, and given back if the payment is declined. Two customers paying for the last item at the same time: one succeeds and the other is not charged.
+- **One order, many vendors.** Each order item stores its vendor and its own status, so every seller ships and tracks only their own items. Vendors never see payment details or customer emails.
 - **Roles are enforced on the server.** Customers, vendors and admins are separated by middleware, vendors can sell only after admin approval, and nobody can register as an admin.
-- **Images live in MongoDB** (4 per product). Uploads up to 10 MB are resized to at most 1200 px and compressed, so phone photos stay small and the app needs no external file storage.
-- **Security basics:** hashed passwords, expiring tokens, rate-limited login, security headers, request size limits and a CORS allow-list.
+- **Security basics:** hashed passwords, expiring tokens, rate-limited login, security headers, request size limits, a CORS allow-list, and a filter against MongoDB operator injection.
 
 ## API overview
 
@@ -156,9 +193,10 @@ It runs about 40 checks covering logins, the catalog, role permissions, buying, 
 | Reviews | `GET` and `POST /api/products/:id/reviews`, `DELETE /api/reviews/:id` |
 | Categories | `GET /api/categories`, `POST /api/categories` (admin) |
 | Images | `GET /api/images/:id` |
-| Orders | `POST /api/orders`, `POST /api/orders/:id/pay`, `GET /api/orders/mine`, `GET /api/orders/vendor`, `GET /api/orders/:id`, `PATCH /api/orders/:id/items/:itemId/status` |
+| Orders | `POST /api/orders`, `POST /api/orders/:id/pay`, `POST /api/orders/:id/cancel`, `GET /api/orders/mine`, `GET /api/orders/vendor`, `GET /api/orders/:id`, `PATCH /api/orders/:id/items/:itemId/status` |
 | Vendor | `GET /api/vendor/stats` |
 | Admin | `GET /api/admin/vendors`, `PATCH /api/admin/vendors/:id/status`, `GET /api/admin/stats` |
+| Health | `GET /api/health` |
 
 ## Project structure
 
@@ -168,24 +206,26 @@ server/
   models/        User, Product, Category, Review, Order, Image
   controllers/   route logic
   routes/        Express routers
-  middleware/    auth (protect, authorize), photo upload
-  services/      payment gateway (simulated)
-  utils/         image resizing, vendor checks, dashboard helpers
+  middleware/    auth (protect, authorize), photo upload, input sanitizing
+  services/      payment gateway (simulated), image storage (MongoDB / Cloudinary)
+  utils/         image resizing, approved-vendor cache, dashboard helpers
   scripts/       seed.js, smoke-test.js
   seed-images/   your product photos for the demo data
 client/
   app/           pages: shop, product, cart, checkout, pay, orders, vendor, admin, login, register
-  components/    shared UI: navbar, cards, footer, theme switcher, illustrations
+  components/    shared UI: navbar, cards, footer, theme switcher, test cards, illustrations
   store/         Redux Toolkit (auth and cart)
-  lib/           API client and helpers
+  lib/           API client (with wake-up retry), helpers
+.github/workflows/keep-alive.yml   keeps the free backend awake
 ```
 
 ## Known limitations
 
 - The payment gateway is a simulation, not a real payment provider.
-- No email notifications, password reset, order cancellation or refunds.
-- Product photos are stored in the database, which suits a demo but not a very large catalog.
+- Cancelling is for whole orders. A vendor cannot cancel or refund a single item.
+- No email notifications or password reset.
 - Shipping cost and taxes are not calculated.
+- On the free hosting plan the first visit after a long quiet period can still take up to a minute.
 
 ## Author
 

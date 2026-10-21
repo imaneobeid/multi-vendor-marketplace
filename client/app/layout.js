@@ -2,6 +2,7 @@ import './globals.css';
 import Providers from './providers';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import WakeBanner from '@/components/WakeBanner';
 
 export const metadata = {
   title: 'Souk',
@@ -24,6 +25,7 @@ export default function RootLayout({ children }) {
           <Navbar />
           <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
           <Footer />
+          <WakeBanner />
         </Providers>
       </body>
     </html>

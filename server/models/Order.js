@@ -16,6 +16,19 @@ const orderItemSchema = new mongoose.Schema({
   },
 });
 
+// One entry per card attempt, so the order shows exactly what happened
+const paymentAttemptSchema = new mongoose.Schema(
+  {
+    at: { type: Date, default: Date.now },
+    success: Boolean,
+    code: String, // e.g. card_declined, insufficient_funds
+    message: String,
+    last4: String,
+    brand: String,
+  },
+  { _id: false }
+);
+
 const orderSchema = new mongoose.Schema(
   {
     customer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
@@ -28,11 +41,30 @@ const orderSchema = new mongoose.Schema(
       country: String,
     },
     totalPrice: { type: Number, required: true },
-    paymentStatus: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending' },
+
+    // pending    -> created, not paid yet
+    // processing -> a payment is being made right now (blocks double payment)
+    // paid       -> payment succeeded
+    // failed     -> the last payment attempt was declined (the customer can try again)
+    // cancelled  -> cancelled before it was paid
+    // refunded   -> paid, then cancelled before shipping; money returned, stock restored
+    paymentStatus: {
+      type: String,
+      enum: ['pending', 'processing', 'paid', 'failed', 'cancelled', 'refunded'],
+      default: 'pending',
+    },
+    paymentAttempts: { type: [paymentAttemptSchema], default: [] },
+    processingAt: Date,
+
     // Filled in when the (simulated) payment succeeds. We never store the full card number.
     transactionId: String,
     cardLast4: String,
     paidAt: Date,
+
+    cancelledAt: Date,
+    cancelReason: String,
+    refundedAt: Date,
+    refundId: String,
   },
   { timestamps: true }
 );

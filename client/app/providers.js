@@ -6,10 +6,12 @@ import store from '@/store/store';
 import { hydrate, refreshUser } from '@/store/authSlice';
 import { hydrateCart } from '@/store/cartSlice';
 import { applyPalette, savedPalette } from '@/lib/palette';
+import api from '@/lib/api';
 
 export default function Providers({ children }) {
   useEffect(() => {
     applyPalette(savedPalette());
+    api.get('/health').catch(() => {}); // wakes a sleeping server as soon as the site opens
     store.dispatch(hydrate());
     store.dispatch(hydrateCart());
     // Re-check the saved login with the server (picks up vendor approval, expired tokens)

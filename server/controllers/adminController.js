@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const asyncHandler = require('../utils/asyncHandler');
+const { clearApprovedVendorCache } = require('../utils/vendors');
 const { TZ, round2, fillDays } = require('../utils/stats');
 
 const DAYS = 7;
@@ -34,6 +35,7 @@ exports.setVendorStatus = asyncHandler(async (req, res) => {
 
   vendor.vendorStatus = status;
   await vendor.save();
+  clearApprovedVendorCache(); // the shop must reflect the change immediately
   res.json({
     _id: vendor._id,
     name: vendor.name,

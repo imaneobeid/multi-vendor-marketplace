@@ -1,26 +1,20 @@
 const { isValidObjectId } = require('mongoose');
 const Product = require('../models/Product');
 const Category = require('../models/Category');
-const Image = require('../models/Image');
 const asyncHandler = require('../utils/asyncHandler');
 const { approvedVendorIds, isApprovedVendor } = require('../utils/vendors');
 const { processImage } = require('../utils/imageProcessing');
+const { saveImage, deleteImages } = require('../services/imageStorage');
 
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const imageIdFromUrl = (url) => url.split('/').pop();
 
 async function saveImages(files = [], ownerId) {
   const processed = await Promise.all(files.map((f) => processImage(f.buffer, f.mimetype)));
-  const docs = await Image.insertMany(
-    processed.map((p) => ({ data: p.data, contentType: p.contentType, size: p.data.length, owner: ownerId }))
-  );
-  return docs.map((d) => `/api/images/${d._id}`);
+  return Promise.all(processed.map((p) => saveImage({ data: p.data, contentType: p.contentType, owner: ownerId })));
 }
 
-async function deleteImagesByUrls(urls = []) {
-  const ids = urls.map(imageIdFromUrl).filter(isValidObjectId);
-  if (ids.length) await Image.deleteMany({ _id: { $in: ids } });
-}
+const deleteImagesByUrls = (urls = []) => deleteImages(urls);
 
 const populateProduct = (q) =>
   q.populate('category', 'name slug').populate('vendor', 'storeName');

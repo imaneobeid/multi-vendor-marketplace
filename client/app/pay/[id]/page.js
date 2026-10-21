@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
@@ -9,8 +9,11 @@ import { money, orderRef } from '@/lib/format';
 import { clearCart } from '@/store/cartSlice';
 import { inputCls, labelCls, btnPrimary, btnGhost } from '@/components/ui';
 import CheckoutSteps from '@/components/CheckoutSteps';
+import TestCards from '@/components/TestCards';
+import CancelOrderButton from '@/components/CancelOrderButton';
+import StatusBadge from '@/components/StatusBadge';
 
-const groupCardNumber = (v) => v.replace(/\D/g, '').slice(0, 16).replace(/(\d{4})(?=\d)/g, '$1 ');
+const groupCardNumber = (v) => v.replace(/\D/g, '').slice(0, 19).replace(/(\d{4})(?=\d)/g, '$1 ');
 const formatExpiry = (v) => {
   const d = v.replace(/\D/g, '').slice(0, 4);
   return d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
@@ -32,19 +35,23 @@ export default function PayPage() {
     if (ready && !user) router.replace('/login');
   }, [ready, user, router]);
 
+  const load = useCallback(async () => {
+    try {
+      const r = await api.get(`/orders/${id}`);
+      setOrder(r.data);
+      setState('ok');
+    } catch {
+      setState('missing');
+    }
+  }, [id]);
+
   useEffect(() => {
-    if (!ready || !user) return;
-    api
-      .get(`/orders/${id}`)
-      .then((r) => {
-        setOrder(r.data);
-        setState('ok');
-      })
-      .catch(() => setState('missing'));
-  }, [id, ready, user]);
+    if (ready && user) load();
+  }, [ready, user, load]);
 
   async function onSubmit(e) {
     e.preventDefault();
+    if (paying) return; // a second click can never start a second payment
     setError('');
     const [mm, yy] = card.expiry.split('/');
     setPaying(true);
@@ -56,6 +63,8 @@ export default function PayPage() {
       setOrder(data);
     } catch (err) {
       setError(errorMessage(err));
+      // A declined payment changes the order's status, so show the up-to-date order
+      if ([402, 409].includes(err.response?.status)) await load();
     } finally {
       setPaying(false);
     }
@@ -73,7 +82,7 @@ export default function PayPage() {
     );
   }
 
-  // Payment done (just now, or earlier)
+  // Paid
   if (order.paymentStatus === 'paid') {
     return (
       <div className="anim-fade-up mx-auto max-w-md text-center">
@@ -98,19 +107,66 @@ export default function PayPage() {
     );
   }
 
+  // Cancelled or refunded
+  if (order.paymentStatus === 'cancelled' || order.paymentStatus === 'refunded') {
+    const refunded = order.paymentStatus === 'refunded';
+    return (
+      <div className="anim-fade-up mx-auto max-w-md text-center">
+        <h1 className="font-display text-3xl font-semibold tracking-tight">
+          {refunded ? 'Order cancelled and refunded' : 'Order cancelled'}
+        </h1>
+        <p className="mt-3 text-muted">
+          Order #{orderRef(order._id)} was cancelled
+          {order.cancelReason ? `: ${order.cancelReason}` : ''}. {refunded ? 'Your payment was refunded.' : 'You were not charged.'}
+        </p>
+        <div className="mt-6 flex justify-center gap-2">
+          <Link href="/cart" className={btnPrimary}>
+            Back to my cart
+          </Link>
+          <Link href="/orders" className={btnGhost}>
+            My orders
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // A payment is in progress somewhere else
+  if (order.paymentStatus === 'processing') {
+    return (
+      <div className="mx-auto max-w-md text-center">
+        <h1 className="font-display text-3xl font-semibold tracking-tight">Payment in progress</h1>
+        <p className="mt-3 text-muted">A payment for this order is being processed. This usually takes a few seconds.</p>
+        <button onClick={load} className={`${btnGhost} mt-6`}>
+          Check again
+        </button>
+      </div>
+    );
+  }
+
+  // Not paid yet (pending) or the last attempt failed
+  const lastAttempt = order.paymentAttempts?.[order.paymentAttempts.length - 1];
   return (
     <div className="mx-auto max-w-md">
       <CheckoutSteps current={2} />
-      <h1 className="font-display text-3xl font-semibold tracking-tight">Payment</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="font-display text-3xl font-semibold tracking-tight">Payment</h1>
+        <StatusBadge status={order.paymentStatus} />
+      </div>
       <p className="mt-1 text-muted">
         Order #{orderRef(order._id)}, {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
       </p>
 
-      <p className="mt-5 rounded-md border border-sun bg-sun/15 p-3 text-sm">
-        <strong>Test mode.</strong> No real payment is made. Use card <strong>4242 4242 4242 4242</strong> to
-        pay, or <strong>4000 0000 0000 0002</strong> to see a declined payment. Any future expiry date and any
-        3-digit code work.
-      </p>
+      {order.paymentStatus === 'failed' && lastAttempt && (
+        <p role="alert" className="mt-5 rounded-md border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
+          Your last payment did not go through: {lastAttempt.message} You were not charged. You can try another card
+          ({order.paymentAttempts.length} {order.paymentAttempts.length === 1 ? 'attempt' : 'attempts'} so far).
+        </p>
+      )}
+
+      <div className="mt-5">
+        <TestCards onFill={(c) => setCard(c)} />
+      </div>
 
       <form onSubmit={onSubmit} className="mt-5 space-y-4 rounded-xl border border-line bg-white p-5">
         <div>
@@ -168,7 +224,7 @@ export default function PayPage() {
               autoComplete="off"
               placeholder="123"
               value={card.cvc}
-              onChange={(e) => setCard({ ...card, cvc: e.target.value.replace(/\D/g, '').slice(0, 3) })}
+              onChange={(e) => setCard({ ...card, cvc: e.target.value.replace(/\D/g, '').slice(0, 4) })}
               className={inputCls}
             />
           </div>
@@ -180,14 +236,17 @@ export default function PayPage() {
           </p>
         )}
 
-        <button type="submit" disabled={paying} className={`${btnPrimary} w-full`}>
+        <button type="submit" disabled={paying} className={`${btnPrimary} w-full py-2.5`}>
           {paying ? 'Processing payment...' : `Pay ${money(order.totalPrice)}`}
         </button>
       </form>
 
-      <Link href="/cart" className="mt-4 inline-block text-sm text-muted hover:text-ink">
-        Back to cart
-      </Link>
+      <div className="mt-5 flex flex-wrap items-start justify-between gap-3">
+        <Link href="/cart" className="text-sm text-muted hover:text-ink">
+          Back to cart
+        </Link>
+        <CancelOrderButton order={order} onDone={setOrder} label="Cancel payment" />
+      </div>
     </div>
   );
 }

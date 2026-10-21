@@ -16,6 +16,10 @@ const publicUser = (u) => ({
 exports.register = asyncHandler(async (req, res) => {
   const { name, email, password, role, storeName, storeDescription } = req.body;
 
+  if ([name, email, password].some((v) => typeof v !== 'string')) {
+    return res.status(400).json({ message: 'Name, email and password must be text' });
+  }
+
   if (!name || !email || !password) {
     return res.status(400).json({ message: 'Name, email and password are required' });
   }
@@ -49,7 +53,7 @@ exports.register = asyncHandler(async (req, res) => {
 // POST /api/auth/login
 exports.login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) {
+  if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
     return res.status(400).json({ message: 'Email and password are required' });
   }
 
