@@ -6,7 +6,8 @@
     "dev": "nodemon server.js",
     "start": "node server.js",
     "seed": "node scripts/seed.js",
-    "smoke": "node scripts/smoke-test.js"
+    "smoke": "node scripts/smoke-test.js",
+    "photos": "node scripts/check-photos.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

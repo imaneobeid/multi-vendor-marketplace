@@ -5,6 +5,7 @@ import api, { errorMessage, imageUrl } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
 import { ProductCardSkeleton } from '@/components/Skeleton';
 import { inputCls, btnGhost } from '@/components/ui';
+import StallIllustration from '@/components/StallIllustration';
 
 const PERKS = [
   { title: 'Approved sellers only', text: 'Every shop is reviewed by our team before it can sell.' },
@@ -23,6 +24,7 @@ export default function Home() {
   const [categories, setCategories] = useState([]);
   const [featured, setFeatured] = useState([]);
   const [shops, setShops] = useState([]);
+  const [heroReady, setHeroReady] = useState(false); // true once we know whether there are photos for the hero
   const [shop, setShop] = useState(null); // { id, name }
   const [products, setProducts] = useState([]);
   const [meta, setMeta] = useState({ page: 1, pages: 0, total: 0 });
@@ -55,8 +57,9 @@ export default function Home() {
           if (p.images?.[0] && s.images.length < 3) s.images.push(p.images[0]);
         }
         setShops([...byShop.values()]);
+        setHeroReady(true);
       })
-      .catch(() => {});
+      .catch(() => setHeroReady(true));
   }, []);
 
   // Wait until the person stops typing before searching
@@ -163,7 +166,7 @@ export default function Home() {
             </div>
           </div>
 
-          {featured.length > 0 && (
+          {heroReady && featured.length > 0 && (
             <div className="relative hidden h-[360px] lg:block" aria-hidden="true">
               {featured.map((p, i) => (
                 <div
@@ -180,6 +183,13 @@ export default function Home() {
                   />
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* No product photos yet: show the market stall instead, so the hero never looks empty */}
+          {heroReady && featured.length === 0 && (
+            <div className="anim-fade-up hidden lg:block" aria-hidden="true">
+              <StallIllustration className="mx-auto w-full max-w-sm" />
             </div>
           )}
         </div>

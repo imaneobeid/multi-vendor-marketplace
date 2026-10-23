@@ -117,6 +117,8 @@ By default the demo products have no photos and show a plain letter tile. To add
 - **In bulk:** put image files in `server/seed-images/`, named after the product (the list is in the README.txt inside), then run `npm run seed`. Photos of any size work, because they are resized automatically.
 - **One at a time:** log in as a vendor, open **My products**, click **Edit**, and add or remove photos.
 - **Colored placeholders instead:** run `npm run seed -- --placeholders`.
+- **Check your photo names:** run `npm run photos` in `server`. It lists which products have a photo, which are missing, and suggests the right file name for any misnamed picture (add `-- --fix` to rename the obvious ones).
+- **Re-seeding keeps your photos.** Before it wipes the database, `npm run seed` saves any photos added by hand into `server/seed-images/` and puts them back afterwards (for the demo products, matched by name).
 
 ## Payments (test mode)
 

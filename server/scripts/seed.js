@@ -57,8 +57,35 @@ function placeholderSvg(name, hue) {
 
 const daysAgo = (n) => new Date(Date.now() - n * 86400000);
 
+// Photos added by hand (from "My products") live only in the database, and re-seeding wipes it.
+// So before wiping, they are saved as files in seed-images/, and the seed puts them back.
+async function backupPhotos() {
+  let saved = 0;
+  const products = await Product.find({ images: { $exists: true, $ne: [] } }).select('name images').lean();
+  for (const p of products) {
+    const slug = slugify(p.name);
+    for (let n = 0; n < p.images.length && n < 4; n++) {
+      const match = String(p.images[n]).match(/^\/api\/images\/([0-9a-f]{24})$/i);
+      if (!match) continue; // not stored in MongoDB (for example Cloudinary): nothing to save
+      const img = await Image.findById(match[1]);
+      if (!img || img.contentType === 'image/svg+xml') continue; // skip the colored placeholders
+      const ext = img.contentType === 'image/png' ? '.png' : img.contentType === 'image/webp' ? '.webp' : '.jpg';
+      const base = n === 0 ? slug : `${slug}-${n + 1}`;
+      const alreadyThere = Object.keys(MIME).some((e) => fs.existsSync(path.join(IMAGE_DIR, base + e)));
+      if (alreadyThere) continue; // never overwrite a file you put there yourself
+      fs.mkdirSync(IMAGE_DIR, { recursive: true });
+      fs.writeFileSync(path.join(IMAGE_DIR, base + ext), img.data);
+      saved++;
+    }
+  }
+  return saved;
+}
+
 (async () => {
   await mongoose.connect(process.env.MONGO_URI);
+
+  const kept = await backupPhotos();
+  if (kept) console.log(`Saved ${kept} existing product photo(s) into seed-images/ so they are kept.`);
   await Promise.all([
     User.deleteMany(), Category.deleteMany(), Product.deleteMany(),
     Image.deleteMany(), Review.deleteMany(), Order.deleteMany(),
