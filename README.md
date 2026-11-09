@@ -5,7 +5,7 @@ Souk is a marketplace where small local sellers list products and customers brow
 Built with **Next.js, Node.js + Express, MongoDB, Redux Toolkit** and JWT authentication.
 
 **Live demo:** https://multi-vendor-marketplace-one.vercel.app
-The backend runs on a free plan. A keep-alive job pings it every few minutes, and if it has still gone to sleep the site shows a "Waking up the server" notice and retries by itself. That first load can take up to a minute.
+The backend runs on a free plan that sleeps when nobody visits. Scheduled pings keep it awake most of the time, and if it has gone to sleep anyway the site shows a "Waking up the server" notice and retries by itself. That first load can take up to a minute.
 
 ## Screenshots
 
@@ -159,7 +159,7 @@ Product photos are resized on upload (at most 1200 px, compressed, phone photos 
 ## Cold starts (free hosting)
 
 The free backend host puts the server to sleep after 15 minutes without visitors. To reduce the impact:
-- A scheduled GitHub Actions job (`.github/workflows/keep-alive.yml`) visits `/api/health` every 5 minutes, so the server rarely sleeps.
+- A scheduled GitHub Actions job (`.github/workflows/keep-alive.yml`) visits `/api/health`. GitHub runs scheduled jobs when it has capacity, so they can be delayed by hours: it helps, but it is not a guarantee. An external uptime monitor that calls the same address every 5 minutes (for example cron-job.org, free) makes it much more reliable.
 - If it is asleep anyway, the site shows a "Waking up the server" notice and retries its loading requests automatically for about a minute. Payments and other changes are never retried automatically.
 - The site starts waking the server as soon as any page opens.
 - The server starts fast: it begins listening immediately, the image library is loaded only when a photo is uploaded, and the list of approved vendors is cached for 30 seconds.
